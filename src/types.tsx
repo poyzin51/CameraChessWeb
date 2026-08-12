@@ -12,10 +12,7 @@ interface MovesData {
   sans: string[],
   from: number[],
   to: number[],
-  targets: number[],
-  // Colour whose move this hypothesis is (set when generated); needed once
-  // both-colour hypotheses exist after an observation resync.
-  color?: "white" | "black"
+  targets: number[]
 }
 interface MovesPair {
   "move1": MovesData,
@@ -37,10 +34,7 @@ interface Game {
   lastMove: string,
   greedy: boolean,
   fromOpponent: boolean,
-  error: string | null,
-  // True right after an observation resync: side to move is unknown, so the
-  // hypothesis space must cover both colours until the next confident move.
-  resync?: boolean
+  error: string | null
 }
 
 interface User {

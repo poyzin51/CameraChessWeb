@@ -8,7 +8,7 @@ import { cornersSet } from "../../slices/cornersSlice";
 import { getMarkerXY, getXY } from "../../utils/detect";
 import { CornersPayload, Game, Mode, MovesPair, SetBoolean, SetStringArray } from "../../types";
 import { makeBoard, useGame } from "../../slices/gameSlice";
-import { getMovesPairs, getMovesPairsBothColors } from "../../utils/moves";
+import { getMovesPairs } from "../../utils/moves";
 import { DISPLAY_HEARTBEAT_MS, DisplayMessage, getDisplayChannelName } from "../../utils/displayChannel";
 
 
@@ -47,9 +47,7 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
     if (game.greedy === true) {
       board.undo();
     } else {
-      // After an observation resync the side to move is unknown, so the
-      // hypothesis space covers both colours until the next confident move.
-      movesPairsRef.current = game.resync ? getMovesPairsBothColors(board) : getMovesPairs(board);
+      movesPairsRef.current = getMovesPairs(board);
     }
     boardRef.current = board;
     lastMoveRef.current = game.lastMove;
@@ -134,7 +132,7 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
     }, DISPLAY_HEARTBEAT_MS);
 
     const stopDetection = findPieces(piecesModelRef, videoRef, canvasRef, playingRef, setText, dispatch,
-      cornersRef, boardRef, movesPairsRef, lastMoveRef, moveTextRef, mode, fenRef);
+      cornersRef, boardRef, movesPairsRef, lastMoveRef, moveTextRef, mode);
 
     const stopWebcam = async () => {
       const stream = await streamPromise;
