@@ -18,7 +18,8 @@ const initialState: Game = {
   "lastMove": "",
   "greedy": false,
   "fromOpponent": false,
-  "error": null
+  "error": null,
+  "resync": false
 };
 
 const gameSlice = createSlice({
@@ -54,6 +55,9 @@ const gameSlice = createSlice({
     gameSetError(state, action) {
       state.error = action.payload;
     },
+    gameSetResync(state, action) {
+      state.resync = action.payload;
+    },
     gameUpdate(state, action) {
       const newState: Game = {
         "start": state.start,
@@ -62,7 +66,8 @@ const gameSlice = createSlice({
         "lastMove": action.payload.lastMove,
         "greedy": action.payload.greedy,
         "fromOpponent": action.payload.fromOpponent ?? false,
-        "error": action.payload.error ?? null
+        "error": action.payload.error ?? null,
+        "resync": action.payload.resync ?? false
       }
       return newState
     }
@@ -107,7 +112,8 @@ export const makeUpdatePayload = (board: any, greedy: boolean = false, fromOppon
     "lastMove": lastMove,
     "greedy": greedy,
     "fromOpponent": fromOpponent,
-    "error": error
+    "error": error,
+    "resync": false
   }
 
   return payload
@@ -176,6 +182,6 @@ export const {
   gameSetFen, gameResetFen,
   gameSetStart, gameResetStart,
   gameSetLastMove, gameResetLastMove,
-  gameUpdate, gameSetError
+  gameUpdate, gameSetError, gameSetResync
 } = gameSlice.actions
 export default gameSlice.reducer

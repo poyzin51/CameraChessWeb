@@ -14,6 +14,7 @@ import { persistStore } from "redux-persist";
 import { PersistGate } from "redux-persist/integration/react";
 import { registerSW } from "virtual:pwa-register";
 import { VideoAndSidebar } from './components/common';
+import Display from './components/display/display';
 
 // add this to prompt for a refresh
 const updateSW = registerSW({
@@ -59,6 +60,11 @@ const router = createBrowserRouter([
         element: <FAQ />
       }
     ]
+  },
+  {
+    // TV output: kept outside <App /> so it never waits on model loading.
+    path: "/display",
+    element: <Display />
   }
 ]);
 

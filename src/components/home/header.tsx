@@ -16,21 +16,18 @@ const Header = () => {
         .then(() => void navigate("/"));
     }
   }
-  
+
   return (
-    <div className="row m-2">
-      <div className="h1 col-6 h-100 d-flex justify-content-center align-items-end m-0">
-        <img src="favicon.ico" alt="ChessCam logo" />
-        <>&nbsp;</>
-        <div>ChessCam</div>
+    <div className="d-flex flex-column align-items-center pt-4 pb-2">
+      <img src="matepoint-logo.png" alt="MatePoint Academy logo"
+        style={{ maxHeight: "140px", width: "auto" }} />
+      <div className="h3 mp-brand-title mt-2 mb-0">
+        MatePoint <span className="mp-brand-gold">ChessCam</span>
       </div>
-      <div className="col-6 h-100">
-        <div className="h-100 d-flex justify-content-center align-items-end m-0">
-          <button className="btn btn-dark btn-outline-light m-0" onClick={handleClick}>
-            {username === "" ? "Login" : `Logout from "${username}"`}
-          </button> 
-        </div>
-      </div>
+      <div className="mp-subtitle mb-3">Academy Chess Club &middot; Carnoy</div>
+      <button className="btn btn-dark btn-sm btn-outline-light" onClick={handleClick}>
+        {username === "" ? "Login with Lichess" : `Logout from "${username}"`}
+      </button>
     </div>
   );
 }

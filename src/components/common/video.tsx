@@ -8,7 +8,8 @@ import { cornersSet } from "../../slices/cornersSlice";
 import { getMarkerXY, getXY } from "../../utils/detect";
 import { CornersPayload, Game, Mode, MovesPair, SetBoolean, SetStringArray } from "../../types";
 import { makeBoard, useGame } from "../../slices/gameSlice";
-import { getMovesPairs } from "../../utils/moves";
+import { getMovesPairs, getMovesPairsBothColors } from "../../utils/moves";
+import { getDisplayChannelName } from "../../utils/displayChannel";
 
 
 const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
@@ -25,6 +26,8 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
   const movesPairsRef = useRef<MovesPair[]>(getMovesPairs(boardRef.current));
   const lastMoveRef = useRef<string>(game.lastMove);
   const moveTextRef = useRef<string>("");
+  const fenRef = useRef<string>(game.fen);
+  const displayChannelRef = useRef<BroadcastChannel | null>(null);
   const [canPlay, setCanPlay] = useState(false);
 
   const windowWidth = useWindowWidth();
@@ -37,10 +40,20 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
     if (game.greedy === true) {
       board.undo();
     } else {
-      movesPairsRef.current = getMovesPairs(board);
+      // After an observation resync the side to move is unknown, so the
+      // hypothesis space covers both colours until the next confident move.
+      movesPairsRef.current = game.resync ? getMovesPairsBothColors(board) : getMovesPairs(board);
     }
     boardRef.current = board;
     lastMoveRef.current = game.lastMove;
+    fenRef.current = game.fen;
+
+    // Mirror the tracked position to any open /display tabs on this machine.
+    displayChannelRef.current?.postMessage({
+      "fen": game.fen,
+      "lastMove": game.lastMove,
+      "moves": game.moves
+    });
   }, [game])
 
   const getMoveText = (board: any): string => {
@@ -110,8 +123,10 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
         });
     }
 
+    displayChannelRef.current = new BroadcastChannel(getDisplayChannelName());
+
     const stopDetection = findPieces(piecesModelRef, videoRef, canvasRef, playingRef, setText, dispatch,
-      cornersRef, boardRef, movesPairsRef, lastMoveRef, moveTextRef, mode);
+      cornersRef, boardRef, movesPairsRef, lastMoveRef, moveTextRef, mode, fenRef);
 
     const stopWebcam = async () => {
       const stream = await streamPromise;
@@ -123,6 +138,8 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
     return () => {
       stopDetection();
       void stopWebcam();
+      displayChannelRef.current?.close();
+      displayChannelRef.current = null;
     }
   }, [canvasRef, cornersRef, dispatch, mode, piecesModelRef, playingRef, setText, videoRef]);
 

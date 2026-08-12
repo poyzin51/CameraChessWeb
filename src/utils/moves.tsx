@@ -67,7 +67,8 @@ const getData = (pos: any, move: any) => {
     "sans": [makeSan(pos, move)],
     "from": fromSquares,
     "to": toSquares,
-    "targets": targets
+    "targets": targets,
+    "color": pos.turn
   }
   return moveData;
 }
@@ -94,15 +95,30 @@ const combineData = (move1Data: MovesData, move2Data: MovesData) => {
     "sans": [move1Data.sans[0], move2Data.sans[0]],
     "from": from,
     "to": to,
-    "targets": targets
+    "targets": targets,
+    "color": move1Data.color
   }
   return data;
 }
 
-export const getMovesPairs = (board: any) => {
-  const fen = makeFen(board.toSetup());
-  const setup = parseFen(fen).unwrap();
-  const pos = Chess.fromSetup(setup).unwrap();
+export const getMovesPairs = (board: any, turn: Color | null = null) => {
+  const setup = board.toSetup();
+  if (turn !== null) {
+    setup.turn = turn;
+    setup.epSquare = undefined;
+  }
+  const fen = makeFen(setup);
+  const parsed = parseFen(fen);
+  if (parsed.isErr) {
+    return [];
+  }
+  const chess = Chess.fromSetup(parsed.unwrap());
+  if (chess.isErr) {
+    // A forced-turn position can be unreachable (e.g. the side to move
+    // already gives check); there are simply no hypotheses for that colour.
+    return [];
+  }
+  const pos = chess.unwrap();
 
   const movesPairs: MovesPair[] = [];
 
@@ -139,4 +155,20 @@ export const getMovesPairs = (board: any) => {
   }
 
   return movesPairs;
+}
+
+// After an observation resync the side to move is unknown, so hypothesise
+// legal moves for BOTH colours. The first confidently detected move
+// disambiguates whose turn it actually is.
+export const getMovesPairsBothColors = (board: any) => {
+  return [
+    ...getMovesPairs(board, "white"),
+    ...getMovesPairs(board, "black")
+  ];
+}
+
+// Key used for hypothesis bookkeeping: the same SAN string can exist for
+// both colours once both-colour hypotheses are in play.
+export const moveKey = (move: MovesData): string => {
+  return `${move.color ?? ""}:${move.sans[0]}`;
 }

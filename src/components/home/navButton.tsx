@@ -16,7 +16,7 @@ const NavButton = ({ text, tokenRequired }: { text: string, tokenRequired: boole
 
   return (
     <button 
-      className="btn btn-dark btn-lg btn-outline-light w-100" 
+      className="btn btn-dark btn-lg btn-outline-light w-100 mp-nav-btn"
       onClick={handleClick}
     > 
       {noNavigate ? `${text} (must Login)` : `${text}`}

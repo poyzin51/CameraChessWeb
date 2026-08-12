@@ -60,8 +60,10 @@ export const MEDIA_CONSTRAINTS: any = {
     "facingMode": {
       "ideal": "environment"
     },
+    // Desktop-class processing: ask for full HD so the board ROI crop keeps
+    // detail. The browser falls back to the device's best available mode.
     "width": {
-      "ideal": 640
+      "ideal": 1920
     },
     "aspectRatio": MEDIA_ASPECT_RATIO,
     "resizeMode": "none"
