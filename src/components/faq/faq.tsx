@@ -190,21 +190,28 @@ const data = {
 };
 
 const styles = {
-  bgColor: '#212529',
-  titleTextColor: "white",
+  bgColor: 'transparent',
+  titleTextColor: "#f0b429",
   rowTitleColor: "white",
-  rowContentColor: "white",
-  arrowColor: "white",
+  rowContentColor: "rgba(255, 255, 255, 0.72)",
+  arrowColor: "#f0b429",
 };
 
 const FAQ = () => {
   return (
-    <div className="bg-dark h-100 text-white justify-content-center">
-      <Faq
-        data={data}
-        styles={styles}
-      />
-      <HomeButton />
+    <div className="mp-page">
+      <div className="mp-page-header">
+        <div className="mp-sidebar-brand">
+          <img src="/matepoint-logo.png" alt="" />
+          <span>MatePoint <span className="mp-brand-gold">ChessCam</span></span>
+        </div>
+        <div style={{ width: "auto" }}>
+          <HomeButton />
+        </div>
+      </div>
+      <div className="mp-page-body">
+        <Faq data={data} styles={styles} />
+      </div>
     </div>
   );
 }

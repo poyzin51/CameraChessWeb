@@ -1,13 +1,13 @@
 import { VideoButton, PlayButton, RestartButton, PlaybackButtons, StopButton } from "./buttons";
 import { CornersButton, Sidebar, FenButton } from "../common";
-import { SetBoolean, SetStringArray } from "../../types";
+import { SetBoolean, SetStringArray, Mode } from "../../types";
 
 const UploadSidebar = ({ videoRef, xcornersModelRef, piecesModelRef, canvasRef, 
-  sidebarRef, text, setText, playing, setPlaying, cornersRef }: {
+  sidebarRef, text, setText, playing, setPlaying, cornersRef, mode }: {
   videoRef: any, xcornersModelRef: any, piecesModelRef: any, canvasRef: any, sidebarRef: any,
   text: string[], setText: SetStringArray,
   playing: boolean, setPlaying: SetBoolean,
-  cornersRef: any
+  cornersRef: any, mode: Mode
 }) => {
 
   const inputStyle = {
@@ -15,7 +15,7 @@ const UploadSidebar = ({ videoRef, xcornersModelRef, piecesModelRef, canvasRef,
   }
 
   return (
-    <Sidebar sidebarRef={sidebarRef} playing={playing} text={text} setText={setText} >
+    <Sidebar mode={mode} sidebarRef={sidebarRef} playing={playing} text={text} setText={setText} >
       <li className="my-1" style={inputStyle}>
         <VideoButton videoRef={videoRef} canvasRef={canvasRef} setPlaying={setPlaying} />
       </li>

@@ -1,5 +1,5 @@
 import { CornersButton, Sidebar, RecordButton, DeviceButton } from "../common";
-import { Game, SetBoolean, SetStringArray } from "../../types";
+import { Game, SetBoolean, SetStringArray, Mode } from "../../types";
 import { useUser } from "../../slices/userSlice";
 import { useEffect, useRef, useState } from "react";
 import { lichessPlayMove, lichessStreamGame } from "../../utils/lichess";
@@ -9,10 +9,11 @@ import { gameUpdate, gameSetError, makeBoard, makeUpdatePayload, useGame } from 
 import GamesButton from "./gamesButton";
 
 const PlaySidebar = ({ piecesModelRef, xcornersModelRef, videoRef, canvasRef, sidebarRef,
-  playing, setPlaying, text, setText }: {
+  playing, setPlaying, text, setText, mode }: {
     piecesModelRef: any, xcornersModelRef: any, videoRef: any, canvasRef: any, sidebarRef: any,
     playing: boolean, setPlaying: SetBoolean,
-    text: string[], setText: SetStringArray
+    text: string[], setText: SetStringArray,
+    mode: Mode
   }) => {
   const token: string = useUser().token;
   const game: Game = useGame();
@@ -76,7 +77,7 @@ const PlaySidebar = ({ piecesModelRef, xcornersModelRef, videoRef, canvasRef, si
   }, [dispatch, gameId, token]);
 
   return (
-    <Sidebar sidebarRef={sidebarRef} playing={playing} text={text} setText={setText} >
+    <Sidebar mode={mode} sidebarRef={sidebarRef} playing={playing} text={text} setText={setText} >
       <li className="my-1" style={inputStyle}>
         <DeviceButton videoRef={videoRef} />
       </li>

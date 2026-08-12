@@ -11,8 +11,10 @@ const RecordButton = ({ playing, setPlaying }:
   }
 
  return (
-    <SidebarButton onClick={handleClick}>
-      <Icon iconName={playing ? "bi-pause" : "bi-play"} />
+    <SidebarButton onClick={handleClick}
+      title={playing ? "Pause tracking" : "Start tracking the game"}>
+      <Icon iconName={playing ? "bi-pause-fill" : "bi-play-fill"} />
+      {playing ? "Pause" : "Start"}
     </SidebarButton>
   );
 };

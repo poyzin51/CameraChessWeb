@@ -17,8 +17,9 @@ const StopButton = ({ setPlaying, setText }: { setPlaying: SetBoolean, setText: 
   }
 
  return (
-    <SidebarButton onClick={handleClick}>
-      <Icon iconName="bi-stop" />
+    <SidebarButton onClick={handleClick} title="Stop and reset to the start position">
+      <Icon iconName="bi-arrow-counterclockwise" />
+      Reset
     </SidebarButton>
   );
 };

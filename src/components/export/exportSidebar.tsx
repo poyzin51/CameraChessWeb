@@ -5,15 +5,15 @@ import { Study } from "../../types";
 
 const UploadSidebar = ({ pgn }: { pgn: string }) => {
   const [study, setStudy] = useState<Study | null>(null);
-  const [text, setText] = useState<string[]>(["Select a study", "Export the game"]);
+  const [text, setText] = useState<string[]>([]);
 
   return (
-    <Sidebar playing={false} text={text} setText={setText}>
-      <li className="border-top"></li>
-      <li className="my-2">
+    <Sidebar playing={false} text={text} setText={setText}
+      title="Export" hint="Send the finished game to one of your Lichess studies.">
+      <li>
         <StudyButton study={study} setStudy={setStudy} onlyBroadcasts={false} />
       </li>
-      <li className="my-2">
+      <li>
         <ExportButton study={study} setText={setText} pgn={pgn} />
       </li>
     </Sidebar>

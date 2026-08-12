@@ -17,7 +17,8 @@ const CornersButton = ({ piecesModelRef, xcornersModelRef, videoRef, canvasRef, 
   }
 
   return (
-    <SidebarButton onClick={handleClick}>
+    <SidebarButton onClick={handleClick}
+      title="Detect the board edges in the camera view">
       Find Corners
     </SidebarButton>
   );

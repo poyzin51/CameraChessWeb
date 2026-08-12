@@ -9,7 +9,7 @@ import { getMarkerXY, getXY } from "../../utils/detect";
 import { CornersPayload, Game, Mode, MovesPair, SetBoolean, SetStringArray } from "../../types";
 import { makeBoard, useGame } from "../../slices/gameSlice";
 import { getMovesPairs, getMovesPairsBothColors } from "../../utils/moves";
-import { getDisplayChannelName } from "../../utils/displayChannel";
+import { DISPLAY_HEARTBEAT_MS, DisplayMessage, getDisplayChannelName } from "../../utils/displayChannel";
 
 
 const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
@@ -27,12 +27,19 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
   const lastMoveRef = useRef<string>(game.lastMove);
   const moveTextRef = useRef<string>("");
   const fenRef = useRef<string>(game.fen);
+  const movesRef = useRef<string>(game.moves);
   const displayChannelRef = useRef<BroadcastChannel | null>(null);
   const [canPlay, setCanPlay] = useState(false);
 
   const windowWidth = useWindowWidth();
   const windowHeight = useWindowHeight();
   const dispatch = useDispatch();
+
+  const makeDisplayMessage = useEffectEvent((): DisplayMessage => ({
+    "fen": fenRef.current,
+    "lastMove": lastMoveRef.current,
+    "moves": movesRef.current
+  }));
 
   useEffect(() => {
     const board = makeBoard(game);
@@ -47,13 +54,10 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
     boardRef.current = board;
     lastMoveRef.current = game.lastMove;
     fenRef.current = game.fen;
+    movesRef.current = game.moves;
 
     // Mirror the tracked position to any open /display tabs on this machine.
-    displayChannelRef.current?.postMessage({
-      "fen": game.fen,
-      "lastMove": game.lastMove,
-      "moves": game.moves
-    });
+    displayChannelRef.current?.postMessage(makeDisplayMessage());
   }, [game])
 
   const getMoveText = (board: any): string => {
@@ -124,6 +128,10 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
     }
 
     displayChannelRef.current = new BroadcastChannel(getDisplayChannelName());
+    displayChannelRef.current.postMessage(makeDisplayMessage());
+    const heartbeat = window.setInterval(() => {
+      displayChannelRef.current?.postMessage(makeDisplayMessage());
+    }, DISPLAY_HEARTBEAT_MS);
 
     const stopDetection = findPieces(piecesModelRef, videoRef, canvasRef, playingRef, setText, dispatch,
       cornersRef, boardRef, movesPairsRef, lastMoveRef, moveTextRef, mode, fenRef);
@@ -138,6 +146,7 @@ const Video = ({ piecesModelRef, canvasRef, videoRef, sidebarRef, playing,
     return () => {
       stopDetection();
       void stopWebcam();
+      window.clearInterval(heartbeat);
       displayChannelRef.current?.close();
       displayChannelRef.current = null;
     }

@@ -36,10 +36,24 @@ const App = () => {
       .catch((error) => console.error("Failed to load TensorFlow models", error));
   }, []);
 
+  // The board-recognition models are ~10MB, so the first load takes a moment.
+  // Without this the whole app is a blank black screen until they arrive.
+  const splash = () => {
+    return (
+      <div className="d-flex h-100 flex-column align-items-center justify-content-center
+        text-center text-white bg-dark">
+        <img src="matepoint-logo.png" alt="MatePoint Academy"
+          style={{ maxHeight: "120px", width: "auto" }} />
+        <div className="spinner-border text-warning my-3" role="status" />
+        <div className="mp-subtitle">Loading board recognition</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Toast />
-      {!loading && <Outlet context={modelRefs} />}
+      {loading ? splash() : <Outlet context={modelRefs} />}
     </>
   );
 };

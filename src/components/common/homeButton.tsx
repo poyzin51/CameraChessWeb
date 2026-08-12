@@ -10,8 +10,9 @@ const HomeButton = () => {
   }
   
   return (
-    <SidebarButton onClick={handleClick} >
-      <Icon iconName="bi-house"/>
+    <SidebarButton onClick={handleClick} title="Back to the menu">
+      <Icon iconName="bi-house" />
+      Menu
     </SidebarButton>
   );
 };

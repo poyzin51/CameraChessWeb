@@ -17,7 +17,8 @@ const RestartButton = ({ videoRef, setText }: { videoRef: any, setText: SetStrin
 
  return (
     <SidebarButton onClick={handleClick}>
-      <Icon iconName="bi-skip-start" />
+      <Icon iconName="bi-skip-start-fill" />
+      Rewind
     </SidebarButton>
   );
 };

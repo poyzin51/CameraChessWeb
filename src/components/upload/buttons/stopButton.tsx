@@ -21,7 +21,8 @@ const StopButton = ({ videoRef, setPlaying, setText }: {
 
  return (
     <SidebarButton onClick={handleClick}>
-      <Icon iconName="bi-stop" />
+      <Icon iconName="bi-arrow-counterclockwise" />
+      Reset
     </SidebarButton>
   );
 };

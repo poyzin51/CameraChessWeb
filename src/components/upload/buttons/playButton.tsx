@@ -14,7 +14,8 @@ const PlayButton = ({ videoRef, playing, setPlaying }: {
 
  return (
     <SidebarButton onClick={handleClick}>
-      <Icon iconName={playing ? "bi-pause" : "bi-play"} />
+      <Icon iconName={playing ? "bi-pause-fill" : "bi-play-fill"} />
+      {playing ? "Pause" : "Play"}
     </SidebarButton>
   );
 };

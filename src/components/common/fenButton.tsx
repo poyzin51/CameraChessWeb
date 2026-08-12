@@ -29,10 +29,11 @@ const FenButton = ({ piecesModelRef, videoRef, canvasRef, setText, cornersRef }:
 
   return (
     <div className="dropdown">
-      <button className="btn btn-dark btn-sm btn-outline-light dropdown-toggle w-100" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+      <button className="btn btn-dark btn-sm btn-outline-light dropdown-toggle w-100" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
+        title="Start from the normal position, or read the current position off the board">
         Start: {option}
       </button>
-      <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+      <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton1">
         {options.map((option) =>
           <li key={option}>
             <button type="button" onClick={() => handleClick(option)} className="dropdown-item">{option}</button>

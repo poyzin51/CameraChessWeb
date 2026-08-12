@@ -1,18 +1,18 @@
 import { CornersButton, Sidebar, RecordButton, StopButton, FenButton, DeviceButton } from "../common";
-import { SetBoolean, SetStringArray } from "../../types";
+import { SetBoolean, SetStringArray, Mode } from "../../types";
 
 const RecordSidebar = ({ piecesModelRef, xcornersModelRef, videoRef, canvasRef, sidebarRef, 
-  playing, setPlaying, text, setText, cornersRef }: {
+  playing, setPlaying, text, setText, cornersRef, mode }: {
   piecesModelRef: any, xcornersModelRef: any, videoRef: any, canvasRef: any, sidebarRef: any,
   playing: boolean, setPlaying: SetBoolean, 
   text: string[], setText: SetStringArray,
-  cornersRef: any
+  cornersRef: any, mode: Mode
 }) => {
   const inputStyle = {
     display: playing ? "none": "inline-block"
   }
   return (
-    <Sidebar sidebarRef={sidebarRef} playing={playing} text={text} setText={setText} >
+    <Sidebar mode={mode} sidebarRef={sidebarRef} playing={playing} text={text} setText={setText} >
       <li className="my-1" style={inputStyle}>
         <DeviceButton videoRef={videoRef} />
       </li>

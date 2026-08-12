@@ -56,8 +56,10 @@ const VideoButton = ({ videoRef, canvasRef, setPlaying }: {
         onChange={handleOnChange}
         ref={inputVideoRef}
       />
-      <SidebarButton onClick={handleOnClick}>
+      <SidebarButton onClick={handleOnClick}
+        title={streaming ? "Close the current video" : "Pick a video file to analyse"}>
         <Icon iconName={streaming ? "bi-folder-x" : "bi-folder"} />
+        {streaming ? "Close Video" : "Choose Video"}
       </SidebarButton>
     </>
   );
