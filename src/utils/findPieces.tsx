@@ -11,7 +11,7 @@ import { makeUci } from "chessops/util";
 import { makeFen } from "chessops/fen";
 import { Color } from "chessops/types";
 import { LIVE_CONFIG } from "./liveConfig";
-import { countMismatches, fenPlacementLabels, getFenFromState, mergeSignatures, stateSignature } from "./fenFromState";
+import { countMismatches, fenPlacementLabels, getFenFromState, mergeSignatures, SIG_UNKNOWN, stateSignature } from "./fenFromState";
 import { moveKey } from "./moves";
 
 const calculateScore = (state: any, move: MovesData, from_thr = 0.6, to_thr = 0.6) => {
@@ -29,14 +29,19 @@ const calculateScore = (state: any, move: MovesData, from_thr = 0.6, to_thr = 0.
 
 const processState = (state: any, movesPairs: MovesPair[], possibleMoves: Set<string>): {
   bestScore1: number, bestScore2: number, bestJointScore: number,
-  bestMove: MovesData | null, bestMoves: MovesData | null
+  bestMove: MovesData | null, bestMoves: MovesData | null,
+  score1Margin: number, jointMargin: number
 } => {
   let bestScore1 = Number.NEGATIVE_INFINITY;
+  let secondScore1 = Number.NEGATIVE_INFINITY;
   let bestScore2 = Number.NEGATIVE_INFINITY;
   let bestJointScore = Number.NEGATIVE_INFINITY;
   let bestMove: MovesData | null = null;
   let bestMoves: MovesData | null = null;
   const seen: Set<string> = new Set();
+  // Best joint score per first move; the margin compares distinct first
+  // moves (pairs sharing move1 commit the same move, so they don't compete).
+  const jointByKey: Map<string, number> = new Map();
 
   movesPairs.forEach(movePair => {
     const key1 = moveKey(movePair.move1);
@@ -47,8 +52,11 @@ const processState = (state: any, movesPairs: MovesPair[], possibleMoves: Set<st
         possibleMoves.add(key1);
       }
       if (score > bestScore1) {
+        secondScore1 = bestScore1;
         bestMove = movePair.move1;
         bestScore1 = score;
+      } else if (score > secondScore1) {
+        secondScore1 = score;
       }
     }
 
@@ -64,13 +72,57 @@ const processState = (state: any, movesPairs: MovesPair[], possibleMoves: Set<st
     }
 
     const jointScore: number = calculateScore(state, movePair.moves);
+    jointByKey.set(key1, Math.max(jointByKey.get(key1) ?? Number.NEGATIVE_INFINITY, jointScore));
     if (jointScore > bestJointScore) {
       bestJointScore = jointScore;
       bestMoves = movePair.moves;
     }
   })
 
-  return { bestScore1, bestScore2, bestJointScore, bestMove, bestMoves };
+  let bestJointKey = Number.NEGATIVE_INFINITY;
+  let secondJointKey = Number.NEGATIVE_INFINITY;
+  jointByKey.forEach(score => {
+    if (score > bestJointKey) {
+      secondJointKey = bestJointKey;
+      bestJointKey = score;
+    } else if (score > secondJointKey) {
+      secondJointKey = score;
+    }
+  });
+
+  return {
+    bestScore1, bestScore2, bestJointScore, bestMove, bestMoves,
+    score1Margin: bestScore1 - secondScore1,
+    jointMargin: bestJointKey - secondJointKey
+  };
+}
+
+// Final check before a commit: the settled signature must actually show the
+// move's squares in their post-move condition. Vacated squares must not hold
+// a confidently-seen piece; destination squares must either read as the
+// moved piece, be unknown, or at least give the target class solid
+// probability (the sigmoid head keeps the true class well-supported even
+// when a look-alike class briefly wins the argmax).
+const sigConfirmsMove = (sig: number[] | null, state: number[][], move: MovesData): boolean => {
+  if (sig === null) {
+    return false;
+  }
+  for (const square of move.from) {
+    if (sig[square] >= 0) {
+      return false;
+    }
+  }
+  for (let i = 0; i < move.to.length; i++) {
+    const s = sig[move.to[i]];
+    if (s === move.targets[i] || s === SIG_UNKNOWN) {
+      continue;
+    }
+    if (state[move.to[i]][move.targets[i]] >= LIVE_CONFIG.pieceConf) {
+      continue;
+    }
+    return false;
+  }
+  return true;
 }
 
 const getBoxCenters = (boxes: tf.Tensor2D) => {
@@ -218,6 +270,7 @@ export const findPieces = (modelRef: any, videoRef: any, canvasRef: any,
   let settleStart: number;
   let unexplainedSince: number | null;
   let lastResyncTime: number;
+  let lastStateUpdate: number | null;
 
   const resetTracking = () => {
     state = zeros(64, 12);
@@ -230,6 +283,7 @@ export const findPieces = (modelRef: any, videoRef: any, canvasRef: any,
     settleStart = 0;
     unexplainedSince = null;
     lastResyncTime = 0;
+    lastStateUpdate = null;
   }
 
   // Returns null for a clean frame, otherwise a short reason string.
@@ -341,6 +395,8 @@ export const findPieces = (modelRef: any, videoRef: any, canvasRef: any,
         let bestJointScore = Number.NEGATIVE_INFINITY;
         let bestMove: MovesData | null = null;
         let bestMoves: MovesData | null = null;
+        let score1Margin = Number.POSITIVE_INFINITY;
+        let jointMargin = Number.POSITIVE_INFINITY;
 
         if (turbulence === null) {
           // Clean frame: feed the rolling state and the commit logic.
@@ -349,7 +405,16 @@ export const findPieces = (modelRef: any, videoRef: any, canvasRef: any,
             : (1 - LIVE_CONFIG.baselineEmaAlpha) * detBaseline + LIVE_CONFIG.baselineEmaAlpha * detCount;
           cleanStreak++;
 
-          state = updateState(state, update);
+          // Time-based smoothing so behaviour is FPS-independent. dt is
+          // clamped so the first clean frame after a long occlusion cannot
+          // wipe the remembered position in one step.
+          const dt = (lastStateUpdate === null)
+            ? Number.POSITIVE_INFINITY
+            : now - lastStateUpdate;
+          const clampedDt = Math.min(dt, 3 * LIVE_CONFIG.stateHalfLifeMs);
+          const decay = Math.pow(0.5, clampedDt / LIVE_CONFIG.stateHalfLifeMs);
+          state = updateState(state, update, decay);
+          lastStateUpdate = now;
 
           // "Unknown" squares are wildcards: a confidence dropout neither
           // restarts the settle timer nor blocks the settled flag.
@@ -363,7 +428,7 @@ export const findPieces = (modelRef: any, videoRef: any, canvasRef: any,
             settleStart = now;
           }
 
-          ({ bestScore1, bestScore2, bestJointScore, bestMove, bestMoves } = processState(state, movesPairsRef.current, possibleMoves));
+          ({ bestScore1, bestScore2, bestJointScore, bestMove, bestMoves, score1Margin, jointMargin } = processState(state, movesPairsRef.current, possibleMoves));
         } else {
           // Turbulent frame (hand / mid-air piece / occlusion): freeze the
           // state so it never feeds the commit logic, and drop the settle.
@@ -377,7 +442,9 @@ export const findPieces = (modelRef: any, videoRef: any, canvasRef: any,
         let hasMove: boolean = false;
         if (settled && (bestMoves !== null) && (mode !== "play")) {
           const move: string = bestMoves.sans[0];
-          hasMove = (bestScore2 > 0) && (bestJointScore > 0) && (possibleMoves.has(moveKey(bestMoves)));
+          hasMove = (bestScore2 > 0) && (bestJointScore > 0) && (possibleMoves.has(moveKey(bestMoves)))
+            && (jointMargin >= LIVE_CONFIG.commitMargin)
+            && sigConfirmsMove(settleSig, state, bestMoves);
           if (hasMove) {
             alignTurn(bestMoves.color);
             boardRef.current.playSan(move);
@@ -387,7 +454,9 @@ export const findPieces = (modelRef: any, videoRef: any, canvasRef: any,
         }
 
         let hasGreedyMove: boolean = false;
-        if (settled && bestMove !== null && !(hasMove) && (bestScore1 > 0)) {
+        if (settled && bestMove !== null && !(hasMove) && (bestScore1 > 0)
+          && (score1Margin >= LIVE_CONFIG.commitMargin)
+          && sigConfirmsMove(settleSig, state, bestMove)) {
           const move: string = bestMove.sans[0];
           if (!(move in greedyMoveToTime)) {
             greedyMoveToTime[move] = endTime;

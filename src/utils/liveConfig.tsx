@@ -21,6 +21,13 @@ export const LIVE_CONFIG = {
   // baseline. Keeps the "display always converges" invariant.
   turbulenceMaxMs: 6000,
 
+  // --- State smoothing -----------------------------------------------------
+  // Half-life of the rolling 64x12 probability grid, in wall-clock time.
+  // (The old code used 0.5 per *frame*, which meant almost no smoothing at
+  // 60fps and heavy smoothing at 10fps.) Smaller = snappier, larger =
+  // steadier against detector flicker.
+  stateHalfLifeMs: 120,
+
   // --- Settled-position detector -----------------------------------------
   // The smoothed state must produce an identical per-square argmax for this
   // long (clean frames only) before any commit decision is taken.
@@ -32,6 +39,11 @@ export const LIVE_CONFIG = {
   // settleMs, so it can be short — the settle gate already provides the
   // stability the original 1s dwell was for.
   greedyDwellMs: 400,
+  // A move only commits when its score beats every other candidate move's
+  // score by at least this margin. Ambiguity (two knights reaching the same
+  // square, similar-looking rook moves) becomes a short wait instead of a
+  // possible wrong move.
+  commitMargin: 0.1,
   // A square is "occupied by class j" in the settle signature / FEN
   // assignment when state[square][j] >= pieceConf, and "confidently empty"
   // when every class is <= emptyConf. In between it is "unknown": treated
